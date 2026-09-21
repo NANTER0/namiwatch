@@ -438,8 +438,7 @@ elif page == "🖨️ Print Scanner":
                         "risk_level",
                         "Unknown"
                     )
-                )
-              st.divider()  
+                )  
 # CRISIS ALERTS
 elif page == "🚨 Crisis Alerts":
 
