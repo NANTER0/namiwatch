@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from analyzer import analyse_article
+from print_ocr import extract_text
 from news_fetcher import fetch_multiple_feeds
 st.set_page_config(
     page_title="NamiWatch",
@@ -71,6 +72,7 @@ page = st.sidebar.radio(
     "📊 Dashboard",
     "📰 Media Monitor",
     "🌐 Live News",
+    "🖨️ Print Scanner",
     "🚨 Crisis Alerts",
     "🔎 Analyse Story",
     "📄 Daily Report"
@@ -328,7 +330,115 @@ elif page == "🌐 Live News":
                             story["link"]
                         )
 
-                    st.divider()
+
+# PRINT NEWSPAPER SCANNER
+elif page == "🖨️ Print Scanner":
+
+    st.header("🖨️ Print Media Scanner")
+
+    st.write(
+        "Upload a photo of a newspaper article. "
+        "NamiWatch will extract and analyse the text."
+    )
+
+    source = st.selectbox(
+        "Newspaper",
+        [
+            "The Namibian",
+            "New Era",
+            "Namibian Sun",
+            "Kundana",
+            "Other"
+        ]
+    )
+
+    image = st.file_uploader(
+        "Upload newspaper photo",
+        type=["jpg", "jpeg", "png"]
+    )
+
+    if image is not None:
+
+        st.image(
+            image,
+            caption="Uploaded newspaper",
+            use_container_width=True
+        )
+
+        if st.button("Scan & Analyse"):
+
+            with st.spinner(
+                "Reading newspaper..."
+            ):
+
+                text = extract_text(image)
+
+            if text.startswith("OCR_ERROR"):
+
+                st.error(text)
+
+            elif not text:
+
+                st.warning(
+                    "No readable text was detected."
+                )
+
+            else:
+
+                st.success(
+                    "Newspaper text extracted."
+                )
+
+                st.text_area(
+                    "Extracted text",
+                    text,
+                    height=250
+                )
+
+                result = analyse_article(
+                    source,
+                    text
+                )
+
+                st.subheader(
+                    "Media Intelligence"
+                )
+
+                c1, c2, c3 = st.columns(3)
+
+                c1.metric(
+                    "Sentiment",
+                    result.get(
+                        "sentiment",
+                        "Unknown"
+                    )
+                )
+
+                c2.metric(
+                    "Topic",
+                    result.get(
+                        "topic",
+                        "Unknown"
+                    )
+                )
+
+                c3.metric(
+                    "Risk Score",
+                    str(
+                        result.get(
+                            "risk_score",
+                            0
+                        )
+                    ) + "/100"
+                )
+
+                st.write(
+                    "Risk level:",
+                    result.get(
+                        "risk_level",
+                        "Unknown"
+                    )
+                )                    st.divider()
 # CRISIS ALERTS
 elif page == "🚨 Crisis Alerts":
 
