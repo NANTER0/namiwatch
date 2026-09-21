@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from analyzer import analyse_article
-
+from news_fetcher import fetch_multiple_feeds
 st.set_page_config(
     page_title="NamiWatch",
     page_icon="🇳🇦",
@@ -68,12 +68,13 @@ df["risk_score"] = pd.to_numeric(
 page = st.sidebar.radio(
     "Navigation",
     [
-        "📊 Dashboard",
-        "📰 Media Monitor",
-        "🚨 Crisis Alerts",
-        "🔎 Analyse Story",
-        "📄 Daily Report"
-    ]
+    "📊 Dashboard",
+    "📰 Media Monitor",
+    "🌐 Live News",
+    "🚨 Crisis Alerts",
+    "🔎 Analyse Story",
+    "📄 Daily Report"
+]
 )
 
 
@@ -222,7 +223,112 @@ elif page == "📰 Media Monitor":
 
         st.divider()
 
+# LIVE NEWS
+elif page == "🌐 Live News":
 
+    st.header("🌐 Live Media Monitoring")
+
+    st.write(
+        "Monitor public RSS news feeds and analyse "
+        "stories as they are published."
+    )
+
+    feed_url = st.text_input(
+        "RSS Feed URL",
+        placeholder="https://example.com/feed"
+    )
+
+    source_name = st.text_input(
+        "Source name",
+        value="Public News Source"
+    )
+
+    if st.button("Fetch Live News"):
+
+        if not feed_url:
+
+            st.warning(
+                "Enter an RSS feed URL."
+            )
+
+        else:
+
+            with st.spinner(
+                "Monitoring media feed..."
+            ):
+
+                feeds = {
+                    source_name: feed_url
+                }
+
+                stories = fetch_multiple_feeds(
+                    feeds
+                )
+
+            if len(stories) == 0:
+
+                st.warning(
+                    "No stories were found. "
+                    "Check that the URL is a valid public RSS feed."
+                )
+
+            else:
+
+                st.success(
+                    "Retrieved " +
+                    str(len(stories)) +
+                    " stories."
+                )
+
+                for story in stories:
+
+                    result = analyse_article(
+                        story["title"],
+                        story["content"]
+                    )
+
+                    st.subheader(
+                        story["title"]
+                    )
+
+                    st.write(
+                        "Source: " +
+                        story["source"]
+                    )
+
+                    st.write(
+                        "Sentiment: " +
+                        str(result.get(
+                            "sentiment",
+                            "Unknown"
+                        ))
+                    )
+
+                    st.write(
+                        "Topic: " +
+                        str(result.get(
+                            "topic",
+                            "Unknown"
+                        ))
+                    )
+
+                    st.write(
+                        "Risk Score: " +
+                        str(result.get(
+                            "risk_score",
+                            0
+                        )) +
+                        "/100"
+                    )
+
+                    if story["link"]:
+
+                        st.link_button(
+                            "Open original article",
+                            story["link"]
+                        )
+
+                    st.divider()
 # CRISIS ALERTS
 elif page == "🚨 Crisis Alerts":
 
